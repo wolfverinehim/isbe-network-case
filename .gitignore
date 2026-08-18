@@ -1,0 +1,23 @@
+node_modules
+.env
+.env.*
+.env_sample*
+
+# Hardhat files
+/cache
+/artifacts
+
+# TypeChain files
+/typechain
+/typechain-types
+
+# solidity-coverage files
+/coverage
+/coverage.json
+
+# Local Besu/QBFT keys and node databases
+/isbe-network-case/QBFT-Network/**/data/
+/isbe-network-case/QBFT-Network/networkFiles/keys/
+
+# Hardhat Ignition default folder for deployments against a local node
+ignition/deployments/chain-31337

@@ -1,0 +1,124 @@
+﻿[
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "bytes32", "name": "groupId", "type": "bytes32" },
+          { "internalType": "address", "name": "payer", "type": "address" },
+          { "internalType": "address", "name": "token", "type": "address" },
+          { "internalType": "address", "name": "reserveRecipient", "type": "address" },
+          { "internalType": "address", "name": "commissionRecipient", "type": "address" },
+          { "internalType": "uint256", "name": "principalAmount", "type": "uint256" },
+          { "internalType": "uint256", "name": "commissionAmount", "type": "uint256" },
+          { "internalType": "uint256", "name": "deadline", "type": "uint256" },
+          { "internalType": "uint256", "name": "nonce", "type": "uint256" }
+        ],
+        "internalType": "struct TreasuryRouterV1.RouteRequest",
+        "name": "req",
+        "type": "tuple"
+      }
+    ],
+    "name": "routeFunding",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "bytes32", "name": "groupId", "type": "bytes32" },
+          { "internalType": "address", "name": "payer", "type": "address" },
+          { "internalType": "address", "name": "token", "type": "address" },
+          { "internalType": "address", "name": "reserveRecipient", "type": "address" },
+          { "internalType": "address", "name": "commissionRecipient", "type": "address" },
+          { "internalType": "uint256", "name": "principalAmount", "type": "uint256" },
+          { "internalType": "uint256", "name": "commissionAmount", "type": "uint256" },
+          { "internalType": "uint256", "name": "deadline", "type": "uint256" },
+          { "internalType": "uint256", "name": "nonce", "type": "uint256" }
+        ],
+        "internalType": "struct TreasuryRouterV1.RouteRequest",
+        "name": "req",
+        "type": "tuple"
+      }
+    ],
+    "name": "canRoute",
+    "outputs": [
+      { "internalType": "bool", "name": "", "type": "bool" },
+      { "internalType": "string", "name": "", "type": "string" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "token", "type": "address" }],
+    "name": "allowlistToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "recipient", "type": "address" }],
+    "name": "allowlistRecipient",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "bool", "name": "pause", "type": "bool" }],
+    "name": "pauseRouting",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "name": "allowlistedTokens",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "name": "allowlistedRecipients",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+    "name": "consumedGroups",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "name": "payerNonces",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "isPaused",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "bytes32", "name": "groupId", "type": "bytes32" },
+      { "indexed": true, "internalType": "address", "name": "payer", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "token", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "principalAmount", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "commissionAmount", "type": "uint256" },
+      { "indexed": false, "internalType": "address", "name": "reserveRecipient", "type": "address" },
+      { "indexed": false, "internalType": "address", "name": "commissionRecipient", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+    ],
+    "name": "FundingRouted",
+    "type": "event"
+  }
+]
