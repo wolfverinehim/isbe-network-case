@@ -64,7 +64,8 @@ export async function deployContract(
     parseInt(compiledContract.gasEstimates.creation.codeDepositCost) * 2;
 
   const web3 = new Web3(rpcUrl);
-  const web3quorum = new Web3Quorum(
+  const Web3QuorumConstructor: any = Web3Quorum;
+  const web3quorum = new Web3QuorumConstructor(
     web3,
     { privateUrl: privateUrl },
     client === "goquorum" ? true : false

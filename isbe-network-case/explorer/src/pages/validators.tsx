@@ -32,7 +32,7 @@ interface IProps {
 
 export default function Validators({ config }: IProps) {
   const isAuthEnabled = publicRuntimeConfig.DISABLE_AUTH === "false";
-  const { data: session, status } = isAuthEnabled ? useSession() : { data: null, status: "unauthenticated" };
+  const { data: session, status } = useSession();
   const loading = isAuthEnabled && status === "loading";
 
   const controller = new AbortController();

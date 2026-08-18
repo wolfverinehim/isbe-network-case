@@ -32,18 +32,14 @@ function MyApp({ Component, pageProps, router }: AppProps) {
     </ChakraProvider>
   );
 
-  return isAuthEnabled ? (
+  return (
     <SessionProvider
-      // Provider options are not required but can be useful in situations where
-      // you have a short session maxAge time. Shown here with default values.
-      session={pageProps.session}
+      session={isAuthEnabled ? pageProps.session : null}
       refetchInterval={10}
       refetchOnWindowFocus={true}
     >
       {content}
     </SessionProvider>
-  ) : (
-    content
   );
 }
 

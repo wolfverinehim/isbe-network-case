@@ -5,6 +5,8 @@ import Web3Quorum from "web3js-quorum";
 import apiAuth from "../../common/lib/authentication";
 import { CompiledContract } from "../../common/types/Contracts";
 
+const Web3QuorumCompat: any = Web3Quorum;
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -58,7 +60,7 @@ async function transactAtAddress(
   const abi = compiledContract.abi;
   const web3 = new Web3(rpcUrl);
   const chainId = await web3.eth.getChainId();
-  const web3quorum = new Web3Quorum(web3, { privateUrl: privateUrl }, true);
+  const web3quorum = new Web3QuorumCompat(web3, { privateUrl: privateUrl }, true);
   //some funcs have `infinite` gas under the gasEsimates, so we just use the blockGasLimit minus a bit
   const latestBlock = await web3.eth.getBlock("latest");
   const gasEstimate = latestBlock.gasLimit - 1000;
@@ -114,7 +116,7 @@ async function besuTransactAtAddress(
 ) {
   const abi = compiledContract.abi;
   const web3 = new Web3(rpcUrl);
-  const web3quorum = new Web3Quorum(web3, { privateUrl: privateUrl });
+  const web3quorum = new Web3QuorumCompat(web3, { privateUrl: privateUrl });
   // const gasEstimate =
   //   parseInt(compiledContract.gasEstimates.creation.codeDepositCost) * 2;
   const contractInstance = new web3quorum.eth.Contract(abi, contractAddress);

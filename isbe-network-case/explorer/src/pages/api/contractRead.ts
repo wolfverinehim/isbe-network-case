@@ -5,6 +5,8 @@ import Web3Quorum from "web3js-quorum";
 import apiAuth from "../../common/lib/authentication";
 import { CompiledContract } from "../../common/types/Contracts";
 
+const Web3QuorumCompat: any = Web3Quorum;
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -55,7 +57,7 @@ async function readValueAtAddress(
   console.log("calling contract function: " + functionToCall);
   const abi = compiledContract.abi;
   const web3 = new Web3(rpcUrl);
-  const web3quorum = Web3Quorum(web3, { privateUrl: privateUrl }, true);
+  const web3quorum = Web3QuorumCompat(web3, { privateUrl: privateUrl }, true);
   const contractInstance = new web3quorum.eth.Contract(abi, contractAddress);
 
   const functionAbi = contractInstance._jsonInterface.find((e: any) => {
@@ -99,7 +101,7 @@ async function besuReadValueAtAddress(
   console.log("calling contract function: " + functionToCall);
   const web3 = new Web3(rpcUrl);
   const chainId = await web3.eth.getChainId();
-  const web3quorum = new Web3Quorum(web3, chainId);
+  const web3quorum = new Web3QuorumCompat(web3, chainId);
   const contract = new web3quorum.eth.Contract(compiledContract.abi);
   // eslint-disable-next-line no-underscore-dangle
   const functionAbi = contract._jsonInterface.find((e: any) => {

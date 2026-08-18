@@ -148,8 +148,8 @@ export default function ContractsIndex(props: IProps) {
       setAccountAddress(needle.accountAddress);
       setDeployParams({
         ...deployParams,
-        privateKeyFrom: getPrivateKey(props.config, needle.accountAddress)
-          .privateKey,
+        privateKeyFrom:
+          getPrivateKey(props.config, needle.accountAddress)?.privateKey ?? "",
       });
     } else {
       setAccountAddress("");
