@@ -27,6 +27,61 @@ Ambos routers comparten protecciones: anti-replay (`groupId` consumido + nonce p
 
 - Node.js 18+
 - `npm install`
+- Docker Desktop iniciado
+- Bash (WSL en Windows) y `jq`
+
+## Red ISBE local
+
+El repositorio incluye los scripts para levantar una red Besu/QBFT local de
+cuatro nodos. Las claves privadas de los validadores y las bases de datos de
+los nodos están excluidas de Git por seguridad; para arrancar desde un clon
+limpio necesitas restaurar un paquete de red privado que contenga
+`isbe-network-case/QBFT-Network/` con sus datos.
+
+En Windows, abre Ubuntu/WSL y ejecuta desde la raíz del repositorio:
+
+```bash
+sudo apt-get update && sudo apt-get install -y jq
+cd /mnt/f/TFS/accuro
+bash ./isbe-network-case/startNetwork.sh
+```
+
+En Linux o macOS:
+
+```bash
+sudo apt-get install jq       # Linux Debian/Ubuntu; en macOS usa brew install jq
+cd /ruta/al/repositorio
+bash ./isbe-network-case/startNetwork.sh
+```
+
+El arranque crea la red Docker `besu-network`, inicia el bootnode en
+`http://localhost:8545` y los validadores en los puertos `8546` a `8548`.
+La red usa `chainId=11073`. Verifica el estado con:
+
+```bash
+docker ps --filter label=project=besu
+curl -s -X POST http://localhost:8545 \
+	-H 'Content-Type: application/json' \
+	--data '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
+```
+
+Para detenerla:
+
+```bash
+bash ./isbe-network-case/stopNetwork.sh
+```
+
+Después de levantar la red, copia `.env.example` a `.env`, completa los
+valores localmente y ejecuta la compilación y los tests antes de desplegar:
+
+```bash
+npm install
+npx hardhat compile
+npx hardhat test
+npx hardhat run scripts/deploy.ts --network isbe
+```
+
+No publiques `.env`, claves de validadores ni paquetes de red exportados.
 
 ## Configuración (`.env`)
 

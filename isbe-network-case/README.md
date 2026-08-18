@@ -22,20 +22,38 @@ To execute the scripts contained in this directory, you need the following:
   - Install on Debian/Ubuntu: `apt-get install jq`
   - Install on macOS: `brew install jq`
 
+The repository intentionally does not publish validator private keys or node
+databases. A clean clone needs a private network bundle restored under
+`QBFT-Network/` before the network can be started.
+
 
 ## BASIC USAGE
-Once the compressed file has been downloaded, we access the resulting directory:
+From this directory, after restoring the private `QBFT-Network/` data:
 
 To start:
 ```bash
-./startNetwork.sh
+bash ./startNetwork.sh
 ```
 
-Generate a network with 4 besu nodes by deploying Docker containers. 
+This creates the Docker network `besu-network` and starts four Besu nodes.
+The bootnode JSON-RPC is available at `http://localhost:8545`; validator RPC
+ports are `8546`, `8547` and `8548`. The local chain ID is `11073`.
+
+Verify the network:
+```bash
+docker ps --filter label=project=besu
+curl -s -X POST http://localhost:8545 \
+  -H 'Content-Type: application/json' \
+  --data '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
+```
 
 
 To stop:
 ```bash
-./stopNetwork.sh
+bash ./stopNetwork.sh
 ```
+
+The scripts are intended for Linux, macOS or WSL. Docker Desktop must be
+running before starting the network. Do not commit `.env` files, validator
+keys or exported network bundles.
 
