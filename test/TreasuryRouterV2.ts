@@ -107,4 +107,24 @@ describe("TreasuryRouterV2", function () {
     await expect(router.connect(other).setReferralFallbackCommissionWallet(commission.address)).to.be.revertedWith(missingRole(other.address, DEFAULT_ADMIN_ROLE));
     await expect(router.connect(other).releaseReferralReward(ethers.ZeroHash, ethers.ZeroHash, other.address, ethers.ZeroAddress, other.address, 1n)).to.be.revertedWith("Caller is not release executor");
   });
+
+  it("bloquea allowlists, configuracion critica y retirada de emergencia cuando esta pausado", async function () {
+    const { router, token, admin, isbeGov, other, commission } = await loadFixture(deployFixture);
+    await router.connect(isbeGov).pause();
+    const tokenAddress = await token.getAddress();
+
+    await expect(router.connect(admin).allowlistToken(tokenAddress)).to.be.revertedWith("Pausable: paused");
+    await expect(router.connect(admin).removeTokenFromAllowlist(tokenAddress)).to.be.revertedWith("Pausable: paused");
+    await expect(router.connect(admin).allowlistRecipient(other.address)).to.be.revertedWith("Pausable: paused");
+    await expect(router.connect(admin).removeRecipientFromAllowlist(other.address)).to.be.revertedWith("Pausable: paused");
+    await expect(router.connect(admin).setReleaseExecutor(other.address, true)).to.be.revertedWith("Pausable: paused");
+    await expect(router.connect(admin).setReferralFallbackCommissionWallet(commission.address)).to.be.revertedWith("Pausable: paused");
+    await expect(router.connect(admin).emergencyWithdrawToken(tokenAddress, other.address, 1n)).to.be.revertedWith("Pausable: paused");
+  });
+
+  it("la pausa no bloquea la gestion de roles (remediacion de claves)", async function () {
+    const { router, admin, isbeGov, other } = await loadFixture(deployFixture);
+    await router.connect(isbeGov).pause();
+    await expect(router.connect(admin).grantRole(ALLOWLIST_ADMIN_ROLE, other.address)).to.emit(router, "RoleGranted");
+  });
 });

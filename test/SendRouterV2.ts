@@ -82,4 +82,23 @@ describe("SendRouterV2", function () {
     await expect(router.connect(other).allowlistToken(await token.getAddress())).to.be.revertedWith(missingRole(other.address, ALLOWLIST_ADMIN_ROLE));
     await expect(router.connect(other).rescueToken(await token.getAddress(), other.address, 1n)).to.be.revertedWith(missingRole(other.address, DEFAULT_ADMIN_ROLE));
   });
+
+  it("bloquea allowlists y rescates cuando esta pausado", async function () {
+    const { router, token, admin, isbeGov, other } = await loadFixture(deployFixture);
+    await router.connect(isbeGov).pause();
+    const tokenAddress = await token.getAddress();
+
+    await expect(router.connect(admin).allowlistToken(tokenAddress)).to.be.revertedWith("Pausable: paused");
+    await expect(router.connect(admin).removeTokenFromAllowlist(tokenAddress)).to.be.revertedWith("Pausable: paused");
+    await expect(router.connect(admin).allowlistRecipient(other.address)).to.be.revertedWith("Pausable: paused");
+    await expect(router.connect(admin).removeRecipientFromAllowlist(other.address)).to.be.revertedWith("Pausable: paused");
+    await expect(router.connect(admin).rescueToken(tokenAddress, other.address, 1n)).to.be.revertedWith("Pausable: paused");
+    await expect(router.connect(admin).rescueNative(other.address, 1n)).to.be.revertedWith("Pausable: paused");
+  });
+
+  it("la pausa no bloquea la gestion de roles (remediacion de claves)", async function () {
+    const { router, admin, isbeGov, other } = await loadFixture(deployFixture);
+    await router.connect(isbeGov).pause();
+    await expect(router.connect(admin).grantRole(ALLOWLIST_ADMIN_ROLE, other.address)).to.emit(router, "RoleGranted");
+  });
 });

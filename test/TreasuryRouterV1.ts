@@ -398,4 +398,44 @@ describe("TreasuryRouterV1", function () {
       expect(reason).to.equal("Group already processed");
     });
   });
+
+  describe("Pausabilidad de funciones administrativas (Modalidad 2)", function () {
+    it("bloquea la gestion de allowlists cuando esta pausado", async function () {
+      const { router, admin, isbeGov, token, reserve } = await loadFixture(
+        deployFixture
+      );
+      await router.connect(isbeGov).pause();
+      const tokenAddress = await token.getAddress();
+
+      await expect(
+        router.connect(admin).allowlistToken(tokenAddress)
+      ).to.be.revertedWith("Pausable: paused");
+      await expect(
+        router.connect(admin).removeTokenFromAllowlist(tokenAddress)
+      ).to.be.revertedWith("Pausable: paused");
+      await expect(
+        router.connect(admin).allowlistRecipient(reserve.address)
+      ).to.be.revertedWith("Pausable: paused");
+      await expect(
+        router.connect(admin).removeRecipientFromAllowlist(reserve.address)
+      ).to.be.revertedWith("Pausable: paused");
+    });
+
+    it("permite gestionar allowlists de nuevo tras despausar", async function () {
+      const { router, admin, isbeGov, other } = await loadFixture(deployFixture);
+      await router.connect(isbeGov).pause();
+      await router.connect(isbeGov).unpause();
+      await expect(router.connect(admin).allowlistRecipient(other.address))
+        .to.emit(router, "RecipientAllowlisted")
+        .withArgs(other.address);
+    });
+
+    it("la pausa no bloquea la gestion de roles (remediacion de claves)", async function () {
+      const { router, admin, isbeGov, other } = await loadFixture(deployFixture);
+      await router.connect(isbeGov).pause();
+      await expect(
+        router.connect(admin).grantRole(ALLOWLIST_ADMIN_ROLE, other.address)
+      ).to.emit(router, "RoleGranted");
+    });
+  });
 });

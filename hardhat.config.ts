@@ -1,10 +1,12 @@
 import type { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import '@rumblefishdev/hardhat-kms-signer'
 import * as dotenv from "dotenv";
 
 dotenv.config();
 
-const { ISBE_RPC_URL, ACCOUNT_PRIVATE_KEY } = process.env;
+const KMS_KEY_ID = process.env.KMS_KEY_ID
+const kmsConfig = KMS_KEY_ID ? { kmsKeyId: KMS_KEY_ID } : {}
 
 const config: HardhatUserConfig = {
   // Build reproducible (requisito ISBE): version exacta y flags explicitos
@@ -23,10 +25,14 @@ const config: HardhatUserConfig = {
   },
   networks: {
     isbe: {
-      url: ISBE_RPC_URL ?? "",
-      chainId: Number(process.env.CHAIN_ID),
-      accounts: ACCOUNT_PRIVATE_KEY ? [ACCOUNT_PRIVATE_KEY] : [],
-      // Redes Besu/QBFT suelen ser gas-free; ajustar si aplica
+      url: process.env.ISBE_URL ?? process.env.LOCALHOST_URL ?? 'http://localhost:8545',
+      chainId: process.env.CHAIN_ID ? Number(process.env.CHAIN_ID) : 11073,
+      accounts: KMS_KEY_ID
+          ? 'remote'
+          : process.env.ACCOUNT_PRIVATE_KEY
+              ? [process.env.ACCOUNT_PRIVATE_KEY]
+              : [],
+      ...kmsConfig,
     },
   },
 };

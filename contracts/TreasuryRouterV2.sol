@@ -314,36 +314,36 @@ contract TreasuryRouterV2 is AccessControl, ReentrancyGuard, Pausable {
         return (true, "Can route with referral");
     }
 
-    function setReleaseExecutor(address executor, bool enabled) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setReleaseExecutor(address executor, bool enabled) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
         require(executor != address(0), "Invalid executor");
         releaseExecutors[executor] = enabled;
         emit ReleaseExecutorUpdated(executor, enabled);
     }
 
-    function setReferralFallbackCommissionWallet(address wallet) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setReferralFallbackCommissionWallet(address wallet) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
         require(wallet != address(0), "Invalid commission wallet");
         referralFallbackCommissionWallet = wallet;
         emit ReferralFallbackCommissionWalletUpdated(wallet);
     }
 
-    function allowlistToken(address token) external onlyRole(ALLOWLIST_ADMIN_ROLE) {
+    function allowlistToken(address token) external onlyRole(ALLOWLIST_ADMIN_ROLE) whenNotPaused {
         require(token != address(0), "Invalid token");
         allowlistedTokens[token] = true;
         emit TokenAllowlisted(token);
     }
 
-    function removeTokenFromAllowlist(address token) external onlyRole(ALLOWLIST_ADMIN_ROLE) {
+    function removeTokenFromAllowlist(address token) external onlyRole(ALLOWLIST_ADMIN_ROLE) whenNotPaused {
         allowlistedTokens[token] = false;
         emit TokenRemovedFromAllowlist(token);
     }
 
-    function allowlistRecipient(address recipient) external onlyRole(ALLOWLIST_ADMIN_ROLE) {
+    function allowlistRecipient(address recipient) external onlyRole(ALLOWLIST_ADMIN_ROLE) whenNotPaused {
         require(recipient != address(0), "Invalid recipient");
         allowlistedRecipients[recipient] = true;
         emit RecipientAllowlisted(recipient);
     }
 
-    function removeRecipientFromAllowlist(address recipient) external onlyRole(ALLOWLIST_ADMIN_ROLE) {
+    function removeRecipientFromAllowlist(address recipient) external onlyRole(ALLOWLIST_ADMIN_ROLE) whenNotPaused {
         allowlistedRecipients[recipient] = false;
         emit RecipientRemovedFromAllowlist(recipient);
     }
@@ -358,7 +358,7 @@ contract TreasuryRouterV2 is AccessControl, ReentrancyGuard, Pausable {
         emit RoutingPaused(false);
     }
 
-    function emergencyWithdrawToken(address token, address to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function emergencyWithdrawToken(address token, address to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant whenNotPaused {
         require(to != address(0), "Invalid recipient");
         require(token != address(0), "Invalid token");
         require(IERC20(token).balanceOf(address(this)) >= amount, "Insufficient balance");
