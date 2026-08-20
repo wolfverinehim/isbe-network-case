@@ -128,24 +128,24 @@ contract SendRouterV2 is AccessControl, ReentrancyGuard, Pausable {
         return (true, "Can route send");
     }
 
-    function allowlistToken(address token) external onlyRole(ALLOWLIST_ADMIN_ROLE) {
+    function allowlistToken(address token) external onlyRole(ALLOWLIST_ADMIN_ROLE) whenNotPaused {
         require(token != address(0), "Invalid token");
         allowlistedTokens[token] = true;
         emit TokenAllowlisted(token);
     }
 
-    function removeTokenFromAllowlist(address token) external onlyRole(ALLOWLIST_ADMIN_ROLE) {
+    function removeTokenFromAllowlist(address token) external onlyRole(ALLOWLIST_ADMIN_ROLE) whenNotPaused {
         allowlistedTokens[token] = false;
         emit TokenRemovedFromAllowlist(token);
     }
 
-    function allowlistRecipient(address recipient) external onlyRole(ALLOWLIST_ADMIN_ROLE) {
+    function allowlistRecipient(address recipient) external onlyRole(ALLOWLIST_ADMIN_ROLE) whenNotPaused {
         require(recipient != address(0), "Invalid recipient");
         allowlistedRecipients[recipient] = true;
         emit RecipientAllowlisted(recipient);
     }
 
-    function removeRecipientFromAllowlist(address recipient) external onlyRole(ALLOWLIST_ADMIN_ROLE) {
+    function removeRecipientFromAllowlist(address recipient) external onlyRole(ALLOWLIST_ADMIN_ROLE) whenNotPaused {
         allowlistedRecipients[recipient] = false;
         emit RecipientRemovedFromAllowlist(recipient);
     }
@@ -160,7 +160,7 @@ contract SendRouterV2 is AccessControl, ReentrancyGuard, Pausable {
         emit RoutingPaused(false);
     }
 
-    function rescueToken(address token, address to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+    function rescueToken(address token, address to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant whenNotPaused {
         require(token != address(0), "Invalid token");
         require(to != address(0), "Invalid recipient");
         require(amount > 0, "Amount must be > 0");
@@ -170,7 +170,7 @@ contract SendRouterV2 is AccessControl, ReentrancyGuard, Pausable {
         emit TokenRescued(token, to, amount, msg.sender, block.timestamp);
     }
 
-    function rescueNative(address payable to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+    function rescueNative(address payable to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant whenNotPaused {
         require(to != address(0), "Invalid recipient");
         require(amount > 0, "Amount must be > 0");
         require(address(this).balance >= amount, "Insufficient native balance");

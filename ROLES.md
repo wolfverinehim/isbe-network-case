@@ -1,10 +1,10 @@
 # Documentación de roles y permisos (RBAC) — Accuro Routers
 
-**Contratos:** `TreasuryRouterV1`, `SendRouterV1`
+**Contratos:** `TreasuryRouterV1`, `SendRouterV1`, `TreasuryRouterV2`, `SendRouterV2`
 **Sistema:** OpenZeppelin `AccessControl` v4.9.6 (expone `IAccessControl`: `hasRole`, `getRoleAdmin`, `grantRole`, `revokeRole`, `renounceRole`)
-**Fecha:** 2026-07-08 · Expediente Modalidad 2 ISBE
+**Fecha:** 2026-08-20 · Expediente Modalidad 2 ISBE
 
-Ambos routers implementan el mismo esquema RBAC. Se documenta una vez y aplica a los dos.
+Los cuatro routers implementan el mismo esquema RBAC de tres roles. Se documenta una vez y aplica a todos; las funciones exclusivas de los V2 se detallan al final de la matriz.
 
 ## Roles definidos
 
@@ -22,7 +22,16 @@ Administra el resto de roles (es el `roleAdmin` por defecto de todos). Permisos:
 
 ### PAUSER_ROLE — requisito de homologación ISBE
 
-Permisos: `pause()` y `unpause()`. Con el contrato pausado, `routeFunding`/`routeSend` revierten (`whenNotPaused`) y `canRoute`/`canRouteSend` devuelven `(false, "Routing paused")`. Las funciones de administración y consulta permanecen operativas para permitir remediación durante una pausa.
+Permisos: `pause()` y `unpause()`.
+
+Alcance de la pausa (lectura estricta del control 2 de la Modalidad 2: *"cambios de parámetros críticos, operaciones sobre fondos y todas las funciones que modifiquen estado crítico"*):
+
+- **Bloqueado con el contrato pausado** — el routing (`routeFunding`, `routeFundingWithReferral`, `routeSend`), la liberación de rewards (`releaseReferralReward`, `releaseReferralEscrowToCommission`), la gestión de allowlists (alta **y baja** de tokens y recipients), la configuración crítica de V2 (`setReleaseExecutor`, `setReferralFallbackCommissionWallet`) y toda extracción de fondos (`emergencyWithdrawToken`, `rescueToken`, `rescueNative`). Es decir: **mientras ISBE mantenga la pausa, ninguna cuenta —incluido el `DEFAULT_ADMIN_ROLE`— puede mover fondos del contrato.**
+- **Operativo con el contrato pausado** — las funciones `view` (`canRoute`, `canRouteSend`, `referralEscrowBalance`, `hasRole`, getters de allowlist) y la gestión de roles heredada de `AccessControl` (`grantRole`, `revokeRole`, `renounceRole`).
+
+La excepción de la gestión de roles es deliberada: si una clave del `DEFAULT_ADMIN_ROLE` o del `ALLOWLIST_ADMIN_ROLE` queda comprometida, la remediación consiste precisamente en rotarla, y esa rotación debe ser posible con el contrato pausado. Toda concesión o revocación queda trazada por `RoleGranted`/`RoleRevoked`. Ninguna función de gestión de roles puede mover fondos ni alterar parámetros de negocio.
+
+`canRoute`/`canRouteSend` devuelven `(false, "Routing paused")` mientras la pausa esté activa.
 
 **Titulares:**
 
@@ -41,11 +50,27 @@ Permisos: `allowlistToken`, `removeTokenFromAllowlist`, `allowlistRecipient`, `r
 |---|---|---|
 | `routeFunding` / `routeSend` | Ninguno (público) | `whenNotPaused`, `nonReentrant`, `msg.sender == req.payer`, allowlists, anti-replay (groupId + nonce), deadline |
 | `canRoute` / `canRouteSend` | Ninguno (view) | — |
-| `allowlistToken` / `removeTokenFromAllowlist` | `ALLOWLIST_ADMIN_ROLE` | Rechaza address(0) en alta |
-| `allowlistRecipient` / `removeRecipientFromAllowlist` | `ALLOWLIST_ADMIN_ROLE` | Rechaza address(0) en alta |
+| `allowlistToken` / `removeTokenFromAllowlist` | `ALLOWLIST_ADMIN_ROLE` | `whenNotPaused`, rechaza address(0) en alta |
+| `allowlistRecipient` / `removeRecipientFromAllowlist` | `ALLOWLIST_ADMIN_ROLE` | `whenNotPaused`, rechaza address(0) en alta |
 | `pause` / `unpause` | `PAUSER_ROLE` | `Pausable` OZ (no re-pausable/re-despausable) |
-| `grantRole` / `revokeRole` | `DEFAULT_ADMIN_ROLE` | — |
+| `grantRole` / `revokeRole` | `DEFAULT_ADMIN_ROLE` | Operativo durante la pausa (remediación de claves) |
 | `renounceRole` | El propio titular | Solo sobre uno mismo |
+
+### Funciones adicionales de los routers V2
+
+| Función | Contrato | Rol requerido | Otras protecciones |
+|---|---|---|---|
+| `routeFundingWithReferral` | `TreasuryRouterV2` | Ninguno (público) | `whenNotPaused`, `nonReentrant`, `msg.sender == req.payer`, allowlists (incluido el referral), anti-replay por `keccak256(groupId, payer)` + nonce, deadline |
+| `releaseReferralReward` | `TreasuryRouterV2` | Ejecutor autorizado (`releaseExecutors`, **no** es un rol de `AccessControl`) | `whenNotPaused`, `nonReentrant`, `releaseId` anti-replay, saldo de escrow suficiente |
+| `releaseReferralEscrowToCommission` | `TreasuryRouterV2` | Ejecutor autorizado (`releaseExecutors`) | `whenNotPaused`, `nonReentrant`, `releaseId` anti-replay, wallet de fallback configurada |
+| `setReleaseExecutor` | `TreasuryRouterV2` | `DEFAULT_ADMIN_ROLE` | `whenNotPaused`, rechaza address(0), evento `ReleaseExecutorUpdated` |
+| `setReferralFallbackCommissionWallet` | `TreasuryRouterV2` | `DEFAULT_ADMIN_ROLE` | `whenNotPaused`, rechaza address(0), evento `ReferralFallbackCommissionWalletUpdated` |
+| `emergencyWithdrawToken` | `TreasuryRouterV2` | `DEFAULT_ADMIN_ROLE` | `whenNotPaused`, `nonReentrant`, comprueba saldo |
+| `rescueToken` / `rescueNative` | `SendRouterV2` | `DEFAULT_ADMIN_ROLE` | `whenNotPaused`, `nonReentrant`, eventos `TokenRescued`/`NativeRescued` |
+
+> **Pendiente de expediente:** `releaseExecutors` es un mapping de permisos gestionado por el `DEFAULT_ADMIN_ROLE`, al margen de `AccessControl`. Un ejecutor autorizado puede transferir escrow al beneficiario indicado. Evaluar convertirlo en un rol (`RELEASE_EXECUTOR_ROLE`) para que quede cubierto por `hasRole`/`grantRole` y por la trazabilidad estándar de `RoleGranted`/`RoleRevoked`.
+>
+> **Pendiente de expediente:** `emergencyWithdrawToken` puede extraer tokens que respaldan escrow de referral sin decrementar `_referralEscrowByRouteAndToken`, lo que dejaría la contabilidad interna por encima del saldo real. Acotar la función al excedente no comprometido o descontar el escrow explícitamente.
 
 ## Asignación inicial (constructor)
 
@@ -85,4 +110,10 @@ El constructor revierte si cualquiera de las dos direcciones es `address(0)`. El
 
 ## Verificación (tests)
 
-Suite en `test/TreasuryRouterV1.ts` y `test/SendRouterV1.ts` (53 tests): asignación de roles en despliegue, pause/unpause por la gobernanza ISBE, rechazo de cuentas sin rol en cada función protegida, rotación (grant/revoke) y bloqueo de operaciones en pausa.
+Suites en `test/` (72 tests): asignación de roles en despliegue, pause/unpause por la gobernanza ISBE, rechazo de cuentas sin rol en cada función protegida, rotación (grant/revoke) y bloqueo de operaciones en pausa.
+
+Cobertura específica del alcance de la pausa — bloque *"Pausabilidad de funciones administrativas (Modalidad 2)"* en las suites V1 y los tests equivalentes en las V2:
+
+- Con el contrato pausado por la gobernanza de ISBE, revierten con `Pausable: paused`: alta y baja de tokens, alta y baja de recipients, `setReleaseExecutor`, `setReferralFallbackCommissionWallet`, `emergencyWithdrawToken`, `rescueToken` y `rescueNative`.
+- Tras `unpause()`, la gestión de allowlists vuelve a operar y emite sus eventos.
+- Con el contrato pausado, `grantRole` sigue operativo y emite `RoleGranted` (excepción documentada para la remediación de claves).

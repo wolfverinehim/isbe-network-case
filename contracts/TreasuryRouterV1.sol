@@ -178,7 +178,7 @@ contract TreasuryRouterV1 is AccessControl, ReentrancyGuard, Pausable {
 
     function allowlistToken(
         address token
-    ) external onlyRole(ALLOWLIST_ADMIN_ROLE) {
+    ) external onlyRole(ALLOWLIST_ADMIN_ROLE) whenNotPaused {
         require(token != address(0), "Invalid token");
         allowlistedTokens[token] = true;
         emit TokenAllowlisted(token);
@@ -186,14 +186,14 @@ contract TreasuryRouterV1 is AccessControl, ReentrancyGuard, Pausable {
 
     function removeTokenFromAllowlist(
         address token
-    ) external onlyRole(ALLOWLIST_ADMIN_ROLE) {
+    ) external onlyRole(ALLOWLIST_ADMIN_ROLE) whenNotPaused {
         allowlistedTokens[token] = false;
         emit TokenRemovedFromAllowlist(token);
     }
 
     function allowlistRecipient(
         address recipient
-    ) external onlyRole(ALLOWLIST_ADMIN_ROLE) {
+    ) external onlyRole(ALLOWLIST_ADMIN_ROLE) whenNotPaused {
         require(recipient != address(0), "Invalid recipient");
         allowlistedRecipients[recipient] = true;
         emit RecipientAllowlisted(recipient);
@@ -201,7 +201,7 @@ contract TreasuryRouterV1 is AccessControl, ReentrancyGuard, Pausable {
 
     function removeRecipientFromAllowlist(
         address recipient
-    ) external onlyRole(ALLOWLIST_ADMIN_ROLE) {
+    ) external onlyRole(ALLOWLIST_ADMIN_ROLE) whenNotPaused {
         allowlistedRecipients[recipient] = false;
         emit RecipientRemovedFromAllowlist(recipient);
     }
