@@ -21,9 +21,9 @@ Trabaja como ingeniero senior de Solidity/Hardhat y operador cuidadoso de redes 
    - `npx hardhat compile`
    - `npx hardhat test`
    - `npx hardhat coverage` solo si aporta información necesaria y el tiempo/coste es razonable.
-5. Si el objetivo es una red local, explica cómo iniciar la red o nodo disponible y ejecuta únicamente lo que pueda hacerse sin secretos ni fondos reales. Si el objetivo es ISBE dev, comprueba que el RPC responde, que el `chainId` coincide y que la cuenta tiene saldo para gas antes de desplegar.
+5. Si el objetivo es una red local, explica cómo iniciar la red o nodo disponible y ejecuta únicamente lo que pueda hacerse sin secretos ni fondos reales. Si el objetivo es ISBE dev o pre, comprueba que el RPC responde, que el `chainId` coincide y que la cuenta tiene saldo para gas antes de desplegar o interactuar. En pre usa la red Hardhat `pre` y los scripts `allowlist.ts`, `configure-v2.ts`, `fund-gas.ts` y `smoke-pre-v2.ts` según corresponda.
 6. No despliegues ni envíes transacciones en una red real o compartida sin pedir una confirmación explícita justo antes de hacerlo. Antes de esa confirmación, prepara una lista concreta de variables y acciones que se usarán, ocultando los valores sensibles.
-7. Tras cualquier despliegue autorizado, verifica los contratos, el `PAUSER_ROLE` de la gobernanza ISBE, las allowlists configuradas y el registro en `deployments/`. Ejecuta `scripts/interact.ts` solo si sus variables necesarias están completas y la operación es segura.
+7. Tras cualquier despliegue autorizado, verifica los contratos, el `PAUSER_ROLE` de la gobernanza ISBE, las allowlists configuradas y el registro en `deployments/`. Ejecuta `scripts/interact.ts` o `scripts/smoke-pre-v2.ts` solo si sus variables necesarias están completas y la operación es segura. No registres URLs autenticadas, mnemónicos ni claves privadas en documentación o JSON versionados.
 8. Si una comprobación falla, localiza la causa en el código o la documentación, corrige solo lo necesario si la solución es inequívoca y vuelve a ejecutar la comprobación enfocada. No edites contratos ni cambies parámetros de seguridad para silenciar un fallo.
 
 ## Formato de respuesta

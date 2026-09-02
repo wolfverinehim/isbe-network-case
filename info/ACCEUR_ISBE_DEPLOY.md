@@ -80,3 +80,17 @@ Si usas routers atomicos:
 
 La UI seguirá mostrando textos "USDT" en varias pantallas (i18n y labels), pero operará contra el contrato que pongas en NEXT_PUBLIC_USDT_CONTRACT.
 Para pruebas funcionales no hace falta cambiar textos.
+
+## 8) Token desplegado en pre
+
+El token `0x77A6c74bcF0fc7EBa5d66775D899F5A7a3F380C0` (`AccEUR`, 6 decimales)
+es una versión anterior basada en `owner`, no la versión RBAC actual. Su owner
+puede ejecutar `mint` mientras el token no esté pausado y
+`mintingDisabled == false`. No se debe intentar consultar `MINTER_ROLE` en ese
+despliegue.
+
+Para nuevos despliegues se usa exclusivamente `scripts/deploy-token.ts`, que
+despliega la versión actual con `DEFAULT_ADMIN_ROLE`, `MINTER_ROLE` y
+`PAUSER_ROLE`. El flujo completo de pre se valida con
+`scripts/smoke-pre-v2.ts`; las claves de las wallets operativas se leen desde
+un JSON local bajo `wallets/`, nunca desde archivos versionados.

@@ -1,0 +1,43 @@
+{
+  "network": "pre",
+  "chainId": 11073,
+  "verifiedAt": "2026-09-02",
+  "admin": "0xf77550ec1565f48be06091009f787863393666BE",
+  "contracts": {
+    "TreasuryRouterV1": "0x43eBf9bC0e5aC8688C598F75d85Be6Ef8Fda67d1",
+    "SendRouterV1": "0x5189d395754b15e9E05e10Ed4461135cCad39F3b",
+    "TreasuryRouterV2": "0xD20cd6F82ff5F9B946C026cd846A1E78C4f1483F",
+    "SendRouterV2": "0xf66573dc1096F4B538b38732d642Dde97Fc720c7",
+    "AccEURLegacy": "0x77A6c74bcF0fc7EBa5d66775D899F5A7a3F380C0"
+  },
+  "operationalWallets": {
+    "reserveRecipient": "0x8D71f6909C668467D60f0cE5867FA768C3F3a9B1",
+    "commissionRecipient": "0x5d95F651a05906A4cAB34521981f1c4f4E338e85",
+    "referralRecipient": "0xC1481fbc58ef19f0Eecd318B652fc814B89e6480",
+    "referralFallbackCommission": "0x0248d3520d0906E02375f3d47f89bA5eaBae0B68",
+    "releaseExecutor": "0xEAa8a5111eebD81bE88ce6d3f1de6FA24ab34aaF",
+    "payerTest": "0xF0b50A5733b1Ce869f6C84B6a40CcDB5a1565115",
+    "p2pRecipientTest": "0x90BA34aD9cF3e3d16482a3Cb45Bae2f6415d37Cc",
+    "gasFaucet": "0x966367a331A15D96e80851F61EFE3d6D8ACAA7a0"
+  },
+  "configuration": {
+    "tokenAllowlistedInAllRouters": true,
+    "recipientsAllowlistedInAllRouters": true,
+    "treasuryV2SelfAllowlistedForEscrow": true,
+    "releaseExecutorEnabled": true,
+    "fallbackWalletConfigured": true,
+    "smokeV2Passed": true
+  },
+  "smokeEvidence": {
+    "mint": "0x6b978f3d1ed22d69ae70ff740ebb145da77f1e8c1f204b62a0b11bc8c00d8d8c",
+    "approveTreasuryV2": "0xbcc419fd1c60b824355b3045307f9e4532b1cd7e4ba8734661cbbe8f1363ca7e",
+    "approveSendV2": "0x52f1d93475cb14283cfffdfd6f7e9d1f755bbab45454ae1e8d34916183ec89e8",
+    "fundingWithEscrow": "0xb20717f7f85f2462badfef375df50f25d958fdab1856b748f81c5d149b047647",
+    "releaseEscrow": "0x85f8e70bf61ce70d7ca59f5633dea97c218a47f2cd7b1f1d7eab9684f7856a33",
+    "sendP2P": "0x00241421868500324baba1dd143d3df3d705e0e9a5aea77e9e26563dc11af78e"
+  },
+  "notes": [
+    "The authenticated RPC URL and all private keys are intentionally excluded.",
+    "AccEURLegacy uses owner-based minting; new deployments use the RBAC contract in contracts/AccEURMock.sol."
+  ]
+}

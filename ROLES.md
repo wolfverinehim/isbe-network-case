@@ -129,7 +129,7 @@ El constructor revierte si cualquiera de las dos direcciones es `address(0)`. El
 
 ## Verificación (tests)
 
-Suites en `test/` (72 tests): asignación de roles en despliegue, pause/unpause por la gobernanza ISBE, rechazo de cuentas sin rol en cada función protegida, rotación (grant/revoke) y bloqueo de operaciones en pausa.
+Suites en `test/` (92 tests): asignación de roles en despliegue, pause/unpause por la gobernanza ISBE, rechazo de cuentas sin rol en cada función protegida, rotación (grant/revoke), bloqueo de operaciones en pausa y semántica completa del token ERC20.
 
 Cobertura específica del alcance de la pausa — bloque *"Pausabilidad de funciones administrativas (Modalidad 2)"* en las suites V1 y los tests equivalentes en las V2:
 
