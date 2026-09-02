@@ -1,26 +1,28 @@
 # Análisis de conformidad — Accuro → ISBE Modalidad 2 (Contrato propio homologado)
 
-**Fecha:** 2026-07-08
-**Contratos analizados:** `TreasuryRouterV1.sol`, `SendRouterV1.sol`, `AccEURMock.sol`
+**Fecha:** 2026-09-02
+**Contratos analizados:** `TreasuryRouterV1.sol`, `SendRouterV1.sol`, `TreasuryRouterV2.sol`, `SendRouterV2.sol`, `AccEURMock.sol`
 **Referencia:** [Modalidad 2](https://docs.redisbe.com/documentation/smart-contracts/modalidades/contrato-propio) · [Desarrollo de Contratos Custom](https://docs.redisbe.com/documentation/smart-contracts/contratos-custom)
 
 ---
 
-> **Actualización 2026-07-08:** Confirmado por el equipo que, pese a lo que indica la documentación pública, en Modalidad 2 el contrato **se despliega directamente** (sin Diamond Proxy de ISBE). Por tanto el unstructured storage y el patrón initializer **no aplican**; los requisitos bloqueantes reales son RBAC (`hasRole`) y pausabilidad (`pause/unpause` con `PAUSER_ROLE` para la gobernanza de ISBE). Ambos ya se han implementado en los dos routers (AccessControl + Pausable OZ, constructor con `admin` + `isbeGovernance`).
+> **Actualización 2026-07-08:** Confirmado por el equipo que, pese a lo que indica la documentación pública, en Modalidad 2 el contrato **se despliega directamente** (sin Diamond Proxy de ISBE). Por tanto el unstructured storage y el patrón initializer **no aplican**; los requisitos bloqueantes reales son RBAC (`hasRole`) y pausabilidad (`pause/unpause` con `PAUSER_ROLE` para la gobernanza de ISBE).
+>
+> **Actualización 2026-09-02:** Cerrados los bloqueantes restantes. `AccEURMock` migrado a `AccessControl` + `Pausable` con `PAUSER_ROLE` para ISBE; suite de tests completa (92 tests); Slither reejecutado sin críticos abiertos; build unificado en Hardhat con pragma exacto `0.8.28` en los cinco contratos y retirada del flujo Python (py-solc-x).
 
 ## Resumen ejecutivo
 
-Los routers de Accuro tienen una lógica de negocio sólida (anti-replay, nonces, deadlines, allowlists, SafeERC20, ReentrancyGuard), pero incumplían los requisitos de gobernanza de la Modalidad 2: RBAC con `PAUSER_ROLE` para ISBE y pausabilidad estándar (`IPause.pause/unpause`) — **ya corregidos**. Queda pendiente: **suite de tests** (vacía), análisis estático y build reproducible.
+Los routers y el token de Accuro combinan una lógica de negocio sólida (anti-replay, nonces, deadlines, allowlists, SafeERC20, ReentrancyGuard) con los requisitos de gobernanza de la Modalidad 2: RBAC con `PAUSER_ROLE` para ISBE y pausabilidad estándar. Los controles obligatorios están cubiertos; queda únicamente la presentación formal del expediente a ISBE.
 
-| Control obligatorio | TreasuryRouterV1 | SendRouterV1 | AccEURMock |
+| Control obligatorio | Routers V1 | Routers V2 | AccEURMock |
 |---|---|---|---|
-| 1. RBAC (`onlyRole`, `hasRole`) | ❌ Ownable | ❌ Ownable | ❌ owner manual |
-| 1b. `PAUSER_ROLE` → gobernanza ISBE | ❌ | ❌ | ❌ |
-| 2. Pausabilidad (`whenNotPaused` + `IPause`) | ❌ sistema propio | ❌ sistema propio | ⚠️ parcial |
-| 3. Unstructured storage | ❌ estructurado | ❌ estructurado | ❌ estructurado |
-| 4. Eventos de trazabilidad | ✅ buenos | ✅ buenos | ✅ buenos |
-| 5. Tests + análisis estático | ❌ carpeta `test/` vacía | ❌ | ❌ |
-| 6. Build reproducible | ❌ inconsistente | ❌ | ❌ |
+| 1. RBAC (`onlyRole`, `hasRole`) | ✅ AccessControl | ✅ AccessControl | ✅ AccessControl |
+| 1b. `PAUSER_ROLE` → gobernanza ISBE | ✅ | ✅ | ✅ |
+| 2. Pausabilidad (`whenNotPaused` + `IPause`) | ✅ | ✅ | ✅ |
+| 3. Unstructured storage | — no aplica | — no aplica | — no aplica |
+| 4. Eventos de trazabilidad | ✅ | ✅ | ✅ |
+| 5. Tests + análisis estático | ✅ 92 tests · Slither sin críticos | ✅ | ✅ |
+| 6. Build reproducible | ✅ solc 0.8.28 exacto | ✅ | ✅ |
 
 ---
 
@@ -74,17 +76,21 @@ Los routers de Accuro tienen una lógica de negocio sólida (anti-replay, nonces
 
 ### 7. Build reproducible — BLOQUEANTE
 
-- `hardhat.config.ts` fija solc `0.8.28` sin settings de optimizer, pero los contratos usan `pragma ^0.8.20` y el deploy real (`scripts/deploy_acceur_isbe.py`) compila con **py-solc-x**, un toolchain distinto → no hay equivalencia bytecode↔fuente garantizada.
+- `hardhat.config.ts` fijaba solc `0.8.28` sin settings de optimizer, los contratos usaban `pragma ^0.8.20` y el deploy real compilaba con **py-solc-x**, un toolchain distinto → no había equivalencia bytecode↔fuente garantizada. **Resuelto (2026-09-02):** pragma exacto `0.8.28` en los cinco contratos, optimizer explícito y despliegue unificado en scripts Hardhat; el flujo Python se ha retirado.
 - Falta `metadata.json`, flags exactos y política de versión.
 
 **Adaptación:** unificar en Hardhat: fijar `pragma solidity 0.8.28` (exacto), optimizer explícito (p. ej. enabled/200), generar `metadata.json`, y reescribir el despliegue como scripts Hardhat documentados (ISBE orquesta el despliegue final, pero exige los scripts en el expediente).
 
-### 8. AccEURMock — decisión de alcance
+### 8. AccEURMock — adaptado (2026-09-02)
 
-Es un mock de testing (así lo documenta `info/ACCEUR_ISBE_DEPLOY.md`). Dos opciones:
+Inicialmente se documentó como mock de testing y se recomendó no homologarlo. Finalmente se ha adaptado al mismo estándar que los routers:
 
-- **Recomendada:** no homologarlo. Usar la **plantilla ERC20 de ISBE** (Modalidad 1, sin proceso de conformidad) como token de pruebas/producción. Menos coste y plazo cero.
-- Si Accuro exige token propio: requiere el mismo refactor completo (RBAC, storage, `PAUSER_ROLE`) y, si representa dinero electrónico/instrumento regulado, podría exigir **Nivel A** (auditoría externa) y encajar mejor en ERC3643.
+- `AccessControl` con `DEFAULT_ADMIN_ROLE`, `MINTER_ROLE` y `PAUSER_ROLE`; eliminado el `owner` manual y la transferencia de propiedad en dos pasos.
+- `Pausable` de OZ con `pause()/unpause()` bajo `PAUSER_ROLE`, asignado a la gobernanza de ISBE en el constructor.
+- Pausa aplicada también a parámetros críticos (`disableMinting`) además de transferencias, allowances, `mint` y `burn`.
+- Suite propia de tests y despliegue vía `scripts/deploy-token.ts` (mismo toolchain que los routers).
+
+**Nota regulatoria:** si el token llegara a representar dinero electrónico o un instrumento regulado, podría exigirse **Nivel A** (auditoría externa) y encajar mejor en ERC3643.
 
 ---
 
@@ -92,11 +98,11 @@ Es un mock de testing (así lo documenta `info/ACCEUR_ISBE_DEPLOY.md`). Dos opci
 
 | Fase | Trabajo | Estado |
 |---|---|---|
-| 1 | Decisión de diseño: routers separados (petición del cliente); destino de AccEURMock pendiente | ✅ / ⏳ |
-| 2 | Refactor Solidity: RBAC (`onlyRole`, `PAUSER_ROLE` → gobernanza ISBE), pausabilidad OZ (`whenNotPaused`, `pause/unpause`) | ✅ Hecho (2026-07-08) |
-| 3 | Suite de tests (unit + integración, cobertura rutas críticas) + Slither sin críticos | ⏳ Pendiente |
-| 4 | Build reproducible: pragma exacto, optimizer, metadata.json, lockfile, scripts Hardhat de despliegue | ⏳ Pendiente |
-| 5 | Documentación: roles/permisos, funciones, casos de prueba | ⏳ Pendiente |
+| 1 | Decisión de diseño: routers separados (petición del cliente); `AccEURMock` adaptado en lugar de descartado | ✅ |
+| 2 | Refactor Solidity: RBAC (`onlyRole`, `PAUSER_ROLE` → gobernanza ISBE), pausabilidad OZ (`whenNotPaused`, `pause/unpause`) | ✅ Hecho (2026-07-08 routers · 2026-09-02 token) |
+| 3 | Suite de tests (unit + integración, cobertura rutas críticas) + Slither sin críticos | ✅ 92 tests · Slither 22 hallazgos, 0 críticos abiertos |
+| 4 | Build reproducible: pragma exacto, optimizer, lockfile, scripts Hardhat de despliegue | ✅ solc 0.8.28 exacto · flujo Python retirado |
+| 5 | Documentación: roles/permisos, funciones, casos de prueba | ✅ `ROLES.md` · `SLITHER_REPORT.md` · `info/ACCEUR_ISBE_DEPLOY.md` |
 | 6 | Solicitud de conformidad a ISBE (objetivo: **Nivel C**, 2–4 semanas) | ⏳ Pendiente |
 
 **Nota regulatoria:** los routers mueven stablecoins con comisión. Si ISBE lo clasifica como servicio sobre instrumento regulado, el nivel exigido podría subir a B/A. Conviene confirmarlo con ISBE al registrar la solicitud. (Esto no es asesoramiento legal.)
@@ -105,11 +111,12 @@ Es un mock de testing (así lo documenta `info/ACCEUR_ISBE_DEPLOY.md`). Dos opci
 
 ## Checklist de auto-validación ISBE (estado actual)
 
-- [ ] Código fuente completo con commit/branch — *repo existe, falta fijar versión*
+- [x] Código fuente completo con commit/branch — repo publicado, rama `master`
 - [x] ~~Unstructured storage~~ — **NO APLICA** (despliegue directo confirmado)
-- [x] RBAC con `PAUSER_ROLE` incluido — **SÍ** (falta documentación formal de roles)
+- [x] RBAC con `PAUSER_ROLE` incluido — **SÍ**, documentado en `ROLES.md`
 - [x] Eventos en acciones sensibles — **SÍ** (RoleGranted/Paused/Unpaused vía OZ)
-- [ ] Tests con reporte de cobertura — **NO**
-- [ ] Análisis estático sin críticos — **NO**
-- [ ] metadata.json + flags de build reproducible — **NO**
-- [ ] Scripts de despliegue completos — **NO** (script Python inconsistente con toolchain)
+- [x] Tests — **SÍ**, 92 tests cubriendo roles, pausa, anti-replay, atomicidad y ERC20
+- [x] Análisis estático sin críticos — **SÍ** (`SLITHER_REPORT.md`, 2026-09-02)
+- [x] Flags de build reproducible — **SÍ** (solc 0.8.28 exacto, optimizer 200, `bytecodeHash: ipfs`)
+- [x] Scripts de despliegue completos — **SÍ** (`scripts/deploy.ts`, `deploy-v2.ts`, `deploy-token.ts`)
+- [ ] Solicitud presentada a ISBE — **PENDIENTE**

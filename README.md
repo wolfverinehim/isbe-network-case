@@ -10,7 +10,7 @@ Contratos de routing atómico de stablecoins de Accuro, adaptados a la **Modalid
 | `SendRouterV1` | Send P2P atómico con recipient dinámico (sin allowlist) y comisión a recipient allowlisted. |
 | `TreasuryRouterV2` | Extiende el split con referral opcional, escrow on-chain y liberación de rewards por ejecutores autorizados. Compatible con RBAC y pausabilidad ISBE. |
 | `SendRouterV2` | Send P2P con las protecciones de V1 y funciones administrativas de rescate protegidas por `DEFAULT_ADMIN_ROLE`. Compatible con RBAC y pausabilidad ISBE. |
-| `AccEURMock` | ERC20 de pruebas (6 decimales, estilo USDT). **Solo testing, no se homologa.** |
+| `AccEURMock` | ERC20 de pruebas (6 decimales, estilo USDT). Adaptado a Modalidad 2: `AccessControl` + `Pausable` con `PAUSER_ROLE` para ISBE. |
 
 Ambos routers comparten protecciones: anti-replay (`groupId` consumido + nonce por payer), deadline, allowlists de tokens/recipients, `nonReentrant`, `whenNotPaused` y `msg.sender == payer`.
 
@@ -104,12 +104,13 @@ RECIPIENT=0x...                           # destinatario P2P para interact.ts
 
 ```bash
 npx hardhat compile                       # compilar
-npx hardhat test                          # 53 tests
+npx hardhat test                          # 92 tests
 npx hardhat coverage                      # reporte de cobertura
 npx hardhat run scripts/deploy.ts --network isbe     # desplegar
 npx hardhat run scripts/interact.ts --network isbe   # probar transacciones
 npx hardhat run scripts/deploy-v2.ts --network isbe # desplegar routers V2
 npx hardhat run scripts/interact-v2.ts --network isbe # probar referral, escrow y pausa V2
+npx hardhat run scripts/deploy-token.ts --network isbe # desplegar AccEURMock
 ```
 
 ### Routers V2
@@ -143,9 +144,9 @@ Registro completo (admin, gobernanza, compiler) en `deployments/isbe.json`.
 ## Estructura
 
 ```
-contracts/          TreasuryRouterV1, SendRouterV1, AccEURMock
-scripts/            deploy.ts, interact.ts (deploy_acceur_isbe.py: legacy)
-test/               suites de ambos routers (53 tests)
+contracts/          TreasuryRouterV1/V2, SendRouterV1/V2, AccEURMock
+scripts/            deploy.ts, deploy-v2.ts, deploy-token.ts, interact.ts, interact-v2.ts
+test/               suites de los cuatro routers y del token (92 tests)
 deployments/        registros de despliegue por red
 ANALISIS_MODALIDAD2.md   análisis de gaps y plan de adaptación
 ROLES.md                 documentación RBAC (expediente ISBE)

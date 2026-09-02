@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.28;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -141,7 +141,7 @@ contract TreasuryRouterV2 is AccessControl, ReentrancyGuard, Pausable {
     }
 
     function routeFunding(RouteRequest calldata req) external nonReentrant whenNotPaused {
-        bytes32 routeKey = _validateAndConsumeBaseRoute(
+        _validateAndConsumeBaseRoute(
             req.groupId,
             req.payer,
             req.token,
@@ -166,9 +166,6 @@ contract TreasuryRouterV2 is AccessControl, ReentrancyGuard, Pausable {
             req.commissionRecipient,
             block.timestamp
         );
-
-        // silence unused local variable warning in some analyzers
-        routeKey;
     }
 
     function routeFundingWithReferral(RouteRequestWithReferral calldata req) external nonReentrant whenNotPaused {
