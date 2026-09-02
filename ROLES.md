@@ -1,10 +1,10 @@
 # Documentación de roles y permisos (RBAC) — Accuro Routers
 
-**Contratos:** `TreasuryRouterV1`, `SendRouterV1`, `TreasuryRouterV2`, `SendRouterV2`
+**Contratos:** `TreasuryRouterV1`, `SendRouterV1`, `TreasuryRouterV2`, `SendRouterV2`, `AccEURMock`
 **Sistema:** OpenZeppelin `AccessControl` v4.9.6 (expone `IAccessControl`: `hasRole`, `getRoleAdmin`, `grantRole`, `revokeRole`, `renounceRole`)
-**Fecha:** 2026-08-20 · Expediente Modalidad 2 ISBE
+**Fecha:** 2026-09-02 · Expediente Modalidad 2 ISBE
 
-Los cuatro routers implementan el mismo esquema RBAC de tres roles. Se documenta una vez y aplica a todos; las funciones exclusivas de los V2 se detallan al final de la matriz.
+Los cuatro routers implementan el mismo esquema RBAC de tres roles. Se documenta una vez y aplica a todos; las funciones exclusivas de los V2 se detallan al final de la matriz. El token `AccEURMock` usa su propio esquema, documentado en su sección específica.
 
 ## Roles definidos
 
@@ -71,6 +71,25 @@ Permisos: `allowlistToken`, `removeTokenFromAllowlist`, `allowlistRecipient`, `r
 > **Pendiente de expediente:** `releaseExecutors` es un mapping de permisos gestionado por el `DEFAULT_ADMIN_ROLE`, al margen de `AccessControl`. Un ejecutor autorizado puede transferir escrow al beneficiario indicado. Evaluar convertirlo en un rol (`RELEASE_EXECUTOR_ROLE`) para que quede cubierto por `hasRole`/`grantRole` y por la trazabilidad estándar de `RoleGranted`/`RoleRevoked`.
 >
 > **Pendiente de expediente:** `emergencyWithdrawToken` puede extraer tokens que respaldan escrow de referral sin decrementar `_referralEscrowByRouteAndToken`, lo que dejaría la contabilidad interna por encima del saldo real. Acotar la función al excedente no comprometido o descontar el escrow explícitamente.
+
+## Token AccEURMock
+
+ERC20 de 6 decimales con cap inmutable, adaptado al mismo esquema de gobernanza.
+
+| Rol | Titular previsto | Permisos |
+|---|---|---|
+| `DEFAULT_ADMIN_ROLE` | Multisig de Accuro | Administra roles y `disableMinting` |
+| `MINTER_ROLE` | Cuenta emisora de Accuro | `mint` hasta `maxSupply`, mientras `mintingDisabled == false` |
+| `PAUSER_ROLE` | **Gobernanza de ISBE** + multisig de Accuro | `pause` / `unpause` |
+
+Constructor: `constructor(string name, string symbol, address admin, address isbeGovernance, uint256 initialSupply, uint256 maxSupply)`. Revierte si `admin` o `isbeGovernance` son `address(0)`, si el cap es cero o si el supply inicial excede el cap. El `admin` recibe `DEFAULT_ADMIN_ROLE`, `MINTER_ROLE` y `PAUSER_ROLE`; la gobernanza de ISBE recibe únicamente `PAUSER_ROLE`.
+
+Alcance de la pausa:
+
+- **Bloqueado con el token pausado** — `transfer`, `approve`, `increaseAllowance`, `decreaseAllowance`, `transferFrom`, `mint`, `burn` y `disableMinting`.
+- **Operativo con el token pausado** — funciones `view` (`balanceOf`, `allowance`, `totalSupply`, `hasRole`) y la gestión de roles (`grantRole`, `revokeRole`, `renounceRole`), por la misma excepción de remediación de claves aplicada a los routers.
+
+No existe `owner` ni transferencia de propiedad: el control es exclusivamente por roles, con trazabilidad `RoleGranted`/`RoleRevoked`. `disableMinting` es irreversible y emite `MintingDisabled`.
 
 ## Asignación inicial (constructor)
 

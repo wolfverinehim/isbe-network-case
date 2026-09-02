@@ -79,6 +79,7 @@ async function main() {
       name,
       symbol,
       deployer.address,
+      isbeGovernance,
       initialMint,
       maxSupply
     );
@@ -86,6 +87,13 @@ async function main() {
     tokenAddress = await token.getAddress();
     console.log(`AccEURMock:       ${tokenAddress}`);
 
+    const tokenPauserRole = ethers.keccak256(
+      ethers.toUtf8Bytes("PAUSER_ROLE")
+    );
+    if (!(await token.hasRole(tokenPauserRole, isbeGovernance))) {
+      throw new Error("La gobernanza ISBE no tiene PAUSER_ROLE en AccEURMock");
+    }
+    console.log("AccEURMock:       PAUSER_ROLE de ISBE verificado");
     // Allowlist del token en ambos routers (requiere que el deployer sea admin)
     if (admin.toLowerCase() === deployer.address.toLowerCase()) {
       await (await treasuryRouter.allowlistToken(tokenAddress)).wait();

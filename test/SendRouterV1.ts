@@ -21,6 +21,7 @@ describe("SendRouterV1", function () {
       "Accuro Euro",
       "AccEUR",
       deployer.address,
+      isbeGov.address,
       ethers.parseUnits("1000000", 6),
       ethers.parseUnits("100000000", 6)
     );

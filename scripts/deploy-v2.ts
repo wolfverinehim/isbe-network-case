@@ -64,12 +64,21 @@ async function main() {
       process.env.TOKEN_NAME ?? "Accuro Euro V2 Test",
       process.env.TOKEN_SYMBOL ?? "AccEUR2",
       deployer.address,
+      isbeGovernance,
       ethers.parseUnits(process.env.INITIAL_MINT ?? "1000000", 6),
       ethers.parseUnits(process.env.MAX_SUPPLY ?? "100000000", 6)
     );
     await token.waitForDeployment();
     tokenAddress = await token.getAddress();
     console.log(`AccEURMock:       ${tokenAddress}`);
+
+    const tokenPauserRole = ethers.keccak256(
+      ethers.toUtf8Bytes("PAUSER_ROLE")
+    );
+    if (!(await token.hasRole(tokenPauserRole, isbeGovernance))) {
+      throw new Error("La gobernanza ISBE no tiene PAUSER_ROLE en AccEURMock");
+    }
+    console.log("AccEURMock:       PAUSER_ROLE de ISBE verificado");
 
     if (admin.toLowerCase() === deployer.address.toLowerCase()) {
       await (await treasuryRouter.allowlistToken(tokenAddress)).wait();

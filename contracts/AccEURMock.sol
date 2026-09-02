@@ -1,22 +1,25 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity 0.8.28;
+
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 
 /**
  * @title AccEURMock
- * @dev ERC20 minimalista para pruebas (simula estable como USDT con 6 decimales).
- * Compatible con funciones usadas por la app: decimals, balanceOf, transfer,
- * approve, allowance, transferFrom.
+ * @dev ERC20 con 6 decimales (flujos tipo USDT) adaptado a la Modalidad 2 de ISBE:
+ * RBAC via AccessControl y pausabilidad estandar con PAUSER_ROLE para la
+ * gobernanza de ISBE.
  */
-contract AccEURMock {
+contract AccEURMock is AccessControl, Pausable {
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+
     string public name;
     string public symbol;
     uint8 public constant decimals = 6;
     uint256 public totalSupply;
     uint256 public immutable maxSupply;
 
-    address public owner;
-    address public pendingOwner;
-    bool public paused;
     bool public mintingDisabled;
 
     mapping(address => uint256) public balanceOf;
@@ -28,48 +31,33 @@ contract AccEURMock {
         address indexed spender,
         uint256 value
     );
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
-    event OwnershipTransferStarted(
-        address indexed previousOwner,
-        address indexed pendingOwner
-    );
-    event Paused(address indexed account);
-    event Unpaused(address indexed account);
     event MintingDisabled(address indexed account);
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only owner");
-        _;
-    }
-
-    modifier whenNotPaused() {
-        require(!paused, "Token paused");
-        _;
-    }
 
     constructor(
         string memory tokenName,
         string memory tokenSymbol,
-        address initialOwner,
+        address admin,
+        address isbeGovernance,
         uint256 initialSupply,
         uint256 maxSupplyRaw
     ) {
-        require(initialOwner != address(0), "Invalid owner");
+        require(admin != address(0), "Invalid admin");
+        require(isbeGovernance != address(0), "Invalid ISBE governance");
         require(maxSupplyRaw > 0, "Invalid max supply");
         require(initialSupply <= maxSupplyRaw, "Initial supply exceeds max");
 
         name = tokenName;
         symbol = tokenSymbol;
-        owner = initialOwner;
         maxSupply = maxSupplyRaw;
-        paused = false;
         mintingDisabled = false;
 
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+        _grantRole(MINTER_ROLE, admin);
+        _grantRole(PAUSER_ROLE, admin);
+        _grantRole(PAUSER_ROLE, isbeGovernance);
+
         if (initialSupply > 0) {
-            _mint(initialOwner, initialSupply);
+            _mint(admin, initialSupply);
         }
     }
 
@@ -134,7 +122,10 @@ contract AccEURMock {
         return true;
     }
 
-    function mint(address to, uint256 amount) external onlyOwner whenNotPaused {
+    function mint(
+        address to,
+        uint256 amount
+    ) external onlyRole(MINTER_ROLE) whenNotPaused {
         require(!mintingDisabled, "Minting disabled");
         _mint(to, amount);
     }
@@ -143,33 +134,19 @@ contract AccEURMock {
         _burn(msg.sender, amount);
     }
 
-    function pause() external onlyOwner {
-        require(!paused, "Already paused");
-        paused = true;
-        emit Paused(msg.sender);
+    function pause() external onlyRole(PAUSER_ROLE) {
+        _pause();
     }
 
-    function unpause() external onlyOwner {
-        require(paused, "Not paused");
-        paused = false;
-        emit Unpaused(msg.sender);
+    function unpause() external onlyRole(PAUSER_ROLE) {
+        _unpause();
     }
 
-    function transferOwnership(address newOwner) external onlyOwner {
-        require(newOwner != address(0), "Invalid owner");
-        pendingOwner = newOwner;
-        emit OwnershipTransferStarted(owner, newOwner);
-    }
-
-    function acceptOwnership() external {
-        require(msg.sender == pendingOwner, "Only pending owner");
-        address previousOwner = owner;
-        owner = pendingOwner;
-        pendingOwner = address(0);
-        emit OwnershipTransferred(previousOwner, owner);
-    }
-
-    function disableMinting() external onlyOwner {
+    function disableMinting()
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        whenNotPaused
+    {
         require(!mintingDisabled, "Minting already disabled");
         mintingDisabled = true;
         emit MintingDisabled(msg.sender);

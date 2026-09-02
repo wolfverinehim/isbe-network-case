@@ -95,6 +95,7 @@ async function main() {
       "Accuro Euro Test",
       "AccEUR",
       signer.address,
+      record.isbeGovernance ?? signer.address,
       ethers.parseUnits("1000000", 6),
       ethers.parseUnits("100000000", 6)
     );
@@ -163,14 +164,14 @@ async function main() {
 
   let balance = await token.balanceOf(signer.address);
   if (balance < totalNeeded) {
-    const owner = await token.owner();
-    if (owner.toLowerCase() === signer.address.toLowerCase()) {
+    const MINTER_ROLE = ethers.keccak256(ethers.toUtf8Bytes("MINTER_ROLE"));
+    if (await token.hasRole(MINTER_ROLE, signer.address)) {
       await (await token.mint(signer.address, totalNeeded)).wait();
       console.log(`Minteados ${fmt(totalNeeded)} AccEUR al payer`);
       balance = await token.balanceOf(signer.address);
     } else {
       throw new Error(
-        `Balance insuficiente (${fmt(balance)}) y el signer no es owner del token para mintear`
+        `Balance insuficiente (${fmt(balance)}) y el signer no tiene MINTER_ROLE en el token`
       );
     }
   }
