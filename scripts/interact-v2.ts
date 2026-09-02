@@ -22,7 +22,7 @@ async function main() {
   );
   const token = await ethers.getContractAt(
     "AccEURMock",
-    record.contracts.AccEURMockV2,
+    record.contracts.AccEURMockV2 ?? record.contracts.AccEURMock,
     signer
   );
 

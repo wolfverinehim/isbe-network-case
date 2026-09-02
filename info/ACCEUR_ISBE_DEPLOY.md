@@ -1,10 +1,10 @@
 # Deploy AccEUR en ISBE (testing)
 
-Este flujo despliega un token ERC20 mock con 6 decimales para simular USDT en la red ISBE y dejarlo compatible con la app actual.
+Este flujo despliega un token ERC20 con 6 decimales para simular USDT en la red ISBE y dejarlo compatible con la app actual.
 
 ## 1) Contrato
 
-Archivo: Back/contracts/AccEURMock.sol
+Archivo: contracts/AccEURMock.sol
 
 Propiedades principales:
 - Nombre configurable (ej: Accuro Euro)
@@ -12,59 +12,45 @@ Propiedades principales:
 - Decimales fijos: 6 (compatible con flujos USDT)
 - Max supply inmutable (cap anti-emision ilimitada)
 - Funciones ERC20 necesarias para la app: transfer, approve, transferFrom, allowance, balanceOf, decimals
-- Mint por owner para pruebas
-- Pausable por owner
-- Ownership en 2 pasos (transferOwnership + acceptOwnership)
+- RBAC (AccessControl): DEFAULT_ADMIN_ROLE, MINTER_ROLE y PAUSER_ROLE
+- Pausable (OpenZeppelin) con PAUSER_ROLE asignado a la gobernanza de ISBE
 
 ## 2) Dependencias
 
-En el entorno Python del backend:
+Mismo toolchain que los routers (requisito de build reproducible):
 
-pip install py-solc-x
+npm install
 
 ## 3) Variables sugeridas
 
-En Back/.env para evitar pasar todo por CLI:
+En .env:
 
 ISBE_RPC_URL=https://tu-rpc-isbe
-ISBE_DEPLOYER_PRIVATE_KEY=0x...
-FUNDING_ROUTER_ADDRESS=0x...
-SEND_ROUTER_ADDRESS=0x...
-ROUTER_OWNER_PRIVATE_KEY=0x...
+ACCOUNT_PRIVATE_KEY=0x...
+ADMIN_ADDRESS=0x...
+ISBE_GOVERNANCE_ADDRESS=0x...
+TOKEN_NAME=Accuro Euro
+TOKEN_SYMBOL=AccEUR
+INITIAL_MINT=1000000
+MAX_SUPPLY=100000000
 
 ## 4) Deploy
 
-Desde la carpeta Back:
-
-python tools/deploy_acceur_isbe.py --name "Accuro Euro" --symbol "AccEUR" --initial-mint 1000000 --max-supply 100000000
+npx hardhat run scripts/deploy-token.ts --network isbe
 
 Opcional: mintear a wallets de pruebas
 
-python tools/deploy_acceur_isbe.py \
-  --name "Accuro Euro" \
-  --symbol "AccEUR" \
-  --initial-mint 1000000 \
-  --max-supply 100000000 \
-  --mint-to 0xWallet1 \
-  --mint-to 0xWallet2 \
-  --mint-amount 50000
+MINT_TO=0xWallet1,0xWallet2 MINT_AMOUNT=50000 npx hardhat run scripts/deploy-token.ts --network isbe
 
-Opcional: allowlist automático en routers (si pasas la private key del owner del router)
+Opcional: allowlist automatico en los routers ya registrados en deployments/
 
-python tools/deploy_acceur_isbe.py \
-  --name "Accuro Euro" \
-  --symbol "AccEUR" \
-  --initial-mint 1000000 \
-  --max-supply 100000000 \
-  --router-owner-private-key 0x...
+ALLOWLIST_ROUTERS=true npx hardhat run scripts/deploy-token.ts --network isbe
 
 ## 4.1) Hardening recomendado tras deploy
 
-- Transferir ownership a multisig (safe) usando flujo 2 pasos:
-  - owner actual: transferOwnership(nuevoOwner)
-  - nuevoOwner: acceptOwnership()
-- Si ya no necesitas emitir mas tokens en pruebas, ejecutar disableMinting()
-- Mantener pause/unpause solo en cuenta de control operacional
+- Asignar DEFAULT_ADMIN_ROLE al multisig y revocarlo de la cuenta de despliegue
+- Mantener MINTER_ROLE solo en la cuenta emisora; si ya no se emite mas, ejecutar disableMinting()
+- Verificar que la gobernanza de ISBE conserva PAUSER_ROLE (el script aborta si no lo tiene)
 
 ## 5) Integración con app
 
@@ -77,9 +63,9 @@ Actualiza:
 - wallet_talk_js/.env.local: NEXT_PUBLIC_USDT_CONTRACT
 - Back/.env: FUNDING_ROUTER_USDT_CONTRACT
 
-Si usas routers atómicos:
-- El token debe estar allowlisted en TreasuryRouterV1 y SendRouterV1
-- Puedes usar el flag --router-owner-private-key para que el script lo haga automáticamente
+Si usas routers atomicos:
+- El token debe estar allowlisted en los routers desplegados
+- Puedes usar ALLOWLIST_ROUTERS=true para que el script lo haga automaticamente
 
 ## 6) Validación rápida
 
