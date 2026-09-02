@@ -34,6 +34,22 @@ const config: HardhatUserConfig = {
               : [],
       ...kmsConfig,
     },
+    pre: {
+      url: process.env.PRE_RPC_URL ?? '',
+      chainId: process.env.PRE_CHAIN_ID ? Number(process.env.PRE_CHAIN_ID) : 11073,
+      // El BaaS de ISBE enruta la peticion segun esta cabecera
+      httpHeaders: {
+        chain_id: process.env.PRE_CHAIN_ID ?? '11073',
+      },
+      accounts: KMS_KEY_ID
+          ? 'remote'
+          : process.env.PRE_ACCOUNT_PRIVATE_KEY
+              ? [process.env.PRE_ACCOUNT_PRIVATE_KEY]
+              : process.env.ACCOUNT_PRIVATE_KEY
+                  ? [process.env.ACCOUNT_PRIVATE_KEY]
+                  : [],
+      ...kmsConfig,
+    },
   },
 };
 

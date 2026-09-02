@@ -20,5 +20,8 @@ node_modules
 /isbe-network-case/QBFT-Network/**/data/
 /isbe-network-case/QBFT-Network/networkFiles/keys/
 
+# Wallets generadas localmente (contienen claves privadas)
+/wallets/
+
 # Hardhat Ignition default folder for deployments against a local node
 ignition/deployments/chain-31337
